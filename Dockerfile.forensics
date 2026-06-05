@@ -11,7 +11,7 @@ RUN apt-get update -qq && \
         tshark \
         tcpdump \
         sleuthkit \
-        libewf-tools \
+        ewf-tools \
         binwalk \
         file \
         xxd \
