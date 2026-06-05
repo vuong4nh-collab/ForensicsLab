@@ -1,0 +1,41 @@
+FROM kalilinux/kali-rolling:latest
+
+LABEL maintainer="ForensicsLab"
+LABEL description="Kali Linux sandbox for digital forensics labs"
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install forensics tools
+RUN apt-get update -qq && \
+    apt-get install -y --no-install-recommends \
+        tshark \
+        tcpdump \
+        sleuthkit \
+        libewf-tools \
+        binwalk \
+        file \
+        xxd \
+        binutils \
+        less \
+        coreutils \
+        grep \
+        bash \
+        python3 \
+        python3-pip && \
+    pip3 install --break-system-packages --no-cache-dir volatility3 && \
+    if command -v vol >/dev/null 2>&1; then \
+        ln -sf "$(command -v vol)" /usr/local/bin/volatility3; \
+        ln -sf "$(command -v vol)" /usr/local/bin/volatility; \
+    fi && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Create evidence directory structure
+RUN mkdir -p /evidence
+
+# Copy entrypoint
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
+
+WORKDIR /evidence
+ENTRYPOINT ["/docker-entrypoint.sh"]
+CMD ["bash"]

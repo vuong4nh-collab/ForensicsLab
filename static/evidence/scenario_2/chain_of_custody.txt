@@ -1,0 +1,11 @@
+CHAIN OF CUSTODY DOCUMENT
+==========================
+Case Number: FL-2026-001
+Evidence ID: DISK-001
+Description: Suspect hard drive image
+Acquired: 2026-05-20 09:00:00 UTC
+Acquired By: Investigator Nguyen An
+Method: FTK Imager - Physical Drive Acquisition
+Hash Algorithm: SHA-256
+Notes: Drive seized from suspect workstation. No physical damage observed.
+==========================

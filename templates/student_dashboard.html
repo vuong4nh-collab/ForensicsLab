@@ -1,0 +1,230 @@
+{% extends 'base.html' %}
+
+{% block title %}Sinh viên{% endblock %}
+
+{% block head %}
+<style>
+/* Dashboard Stats Grid */
+.stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 2rem;
+}
+.stat {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1.2rem;
+}
+.stat-val {
+    font-size: 28px;
+    font-weight: 300;
+    font-family: 'IBM Plex Mono', monospace;
+    margin-bottom: 4px;
+}
+.stat-label {
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .08em;
+}
+
+/* Labs Grid & Cards */
+.labs {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+.lab-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1.5rem;
+    cursor: pointer;
+    transition: .2s;
+    text-decoration: none;
+    display: block;
+    position: relative;
+    overflow: hidden;
+}
+.lab-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    opacity: 0;
+    transition: .2s;
+}
+.lab-card:hover {
+    border-color: rgba(0, 212, 255, .3);
+    transform: translateY(-2px);
+}
+.lab-card:hover::before {
+    opacity: 1;
+}
+.lab-card.c1::before { background: linear-gradient(90deg, var(--accent2), var(--accent)); }
+.lab-card.c2::before { background: linear-gradient(90deg, #ff6b00, #ffab00); }
+.lab-card.c3::before { background: linear-gradient(90deg, #cc0044, #ff4444); }
+.lab-card.c4::before { background: linear-gradient(90deg, #6600cc, #aa44ff); }
+
+.lab-card.locked {
+    opacity: .5;
+    cursor: default;
+    pointer-events: none;
+}
+.lab-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 1rem;
+}
+.lab-num {
+    width: 40px;
+    height: 40px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 16px;
+    font-weight: 500;
+    flex-shrink: 0;
+}
+.n1 { background: rgba(0, 212, 255, .1); color: var(--accent); }
+.n2 { background: rgba(255, 171, 0, .1); color: var(--warning); }
+.n3 { background: rgba(255, 68, 68, .1); color: var(--danger); }
+.n4 { background: rgba(170, 68, 255, .1); color: #aa44ff; }
+
+.lab-title {
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 3px;
+}
+.lab-sub {
+    font-size: 11px;
+    color: var(--muted);
+    font-family: 'IBM Plex Mono', monospace;
+}
+.lab-meta {
+    display: flex;
+    gap: 12px;
+    font-size: 11px;
+    color: var(--muted);
+    font-family: 'IBM Plex Mono', monospace;
+    margin-top: .8rem;
+}
+.prog-track {
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    margin-top: 1rem;
+    overflow: hidden;
+}
+.prog-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width .4s;
+}
+.pf1 { background: linear-gradient(90deg, var(--accent2), var(--accent)); }
+.pf2 { background: linear-gradient(90deg, #ff6b00, #ffab00); }
+.pf3 { background: linear-gradient(90deg, #cc0044, #ff4444); }
+.pf4 { background: linear-gradient(90deg, #6600cc, #aa44ff); }
+
+.prog-label {
+    font-size: 10px;
+    color: var(--muted);
+    font-family: 'IBM Plex Mono', monospace;
+    margin-top: 4px;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .labs {
+        grid-template-columns: 1fr;
+    }
+    .navbar {
+        padding: 0 1rem;
+    }
+    .nav-links {
+        margin-left: 0.5rem;
+    }
+    .nav-link {
+        padding: 6px 8px;
+    }
+}
+@media (max-width: 480px) {
+    .stats {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}
+
+{% block navbar %}
+<nav class="navbar">
+  <span class="brand">[ ForensicsLab ]</span>
+  <div class="nav-links">
+    <a class="nav-link active" href="/dashboard">Dashboard</a>
+    <a class="nav-link" href="#">Kết quả</a>
+  </div>
+  <div class="nav-right">
+    <div class="avatar">{{ session.fullname[:2].upper() }}</div>
+    <span style="display: inline-block; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ session.fullname }}</span>
+    <a class="logout" href="/logout">Thoát</a>
+  </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="content">
+  <div class="stats">
+    {% set done = progress_map.values()|selectattr('status','equalto','graded')|list|length %}
+    {% set submitted = progress_map.values()|selectattr('status','in',['submitted','graded'])|list|length %}
+    <div class="stat"><div class="stat-val" style="color:var(--accent)">{{ done }}</div><div class="stat-label">Đã hoàn thành</div></div>
+    <div class="stat"><div class="stat-val" style="color:var(--success)">{{ submitted }}</div><div class="stat-label">Đã nộp báo cáo</div></div>
+    <div class="stat"><div class="stat-val">{{ scenarios|length }}</div><div class="stat-label">Tổng kịch bản</div></div>
+    <div class="stat"><div class="stat-val" style="color:var(--warning)">{{ solved_flags }}/{{ total_flags }}</div><div class="stat-label">Flags đã giải</div></div>
+  </div>
+
+  <div class="section-title">Kịch bản thực hành</div>
+  <div class="labs">
+    {% set colors = ['c1','c2','c3','c4'] %}
+    {% set nums = ['n1','n2','n3','n4'] %}
+    {% set pfs = ['pf1','pf2','pf3','pf4'] %}
+    {% set badges = ['b-basic','b-mid','b-adv','b-adv'] %}
+    {% for s in scenarios %}
+    {% set p = progress_map.get(s.id) %}
+    {% set locked = s.status == 'locked' %}
+    <a href="{% if not locked %}/lab/{{ s.id }}{% else %}#{% endif %}" class="lab-card {{ colors[loop.index0] }} {% if locked %}locked{% endif %}">
+      <div class="lab-header">
+        <div class="lab-num {{ nums[loop.index0] }}">0{{ loop.index }}</div>
+        <div style="flex:1">
+          <div class="lab-title">{{ s.title }}</div>
+          <div class="lab-sub">{{ s.tools }}</div>
+        </div>
+        <span class="badge {{ badges[loop.index0] }}">{{ s.level }}</span>
+      </div>
+      <div style="font-size:12px;color:var(--muted);line-height:1.6">{{ s.description }}</div>
+      <div class="lab-meta">
+        <span>⏱ {{ s.duration }}</span>
+        <span style="margin-left:auto">
+          {% if locked %}<span class="badge b-locked">🔒 Chưa mở</span>
+          {% elif p and p.status == 'graded' %}<span class="badge b-done">✓ Hoàn thành{% if p.score %} · {{ p.score }}/10{% endif %}</span>
+          {% elif p and p.status == 'submitted' %}<span class="badge b-ongoing">⏳ Chờ chấm</span>
+          {% elif p %}<span class="badge b-ongoing">▶ Đang làm</span>
+          {% else %}<span class="badge b-basic">Bắt đầu</span>{% endif %}
+        </span>
+      </div>
+      <div class="prog-track"><div class="prog-fill {{ pfs[loop.index0] }}" style="width:{% if p and p.status=='graded' %}100{% elif p and p.status=='submitted' %}80{% elif p %}40{% else %}0{% endif %}%"></div></div>
+      <div class="prog-label">{% if p and p.status=='graded' %}100{% elif p and p.status=='submitted' %}80{% elif p %}40{% else %}0{% endif %}% hoàn thành</div>
+    </a>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

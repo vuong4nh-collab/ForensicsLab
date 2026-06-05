@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block title %}Lỗi {{ code }}{% endblock %}
+
+{% block head %}
+<style>
+.error-container {
+    max-width: 500px;
+    margin: 100px auto;
+    text-align: center;
+    padding: 2rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    position: relative;
+}
+.error-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--danger), var(--warning));
+}
+.error-code {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 72px;
+    font-weight: 500;
+    color: var(--danger);
+    margin-bottom: 1rem;
+}
+.error-message {
+    font-size: 16px;
+    color: var(--text);
+    margin-bottom: 2rem;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="error-container">
+    <div class="error-code">{{ code }}</div>
+    <div class="error-message">{{ message }}</div>
+    <a href="/dashboard" class="btn">Quay lại Dashboard</a>
+</div>
+{% endblock %}

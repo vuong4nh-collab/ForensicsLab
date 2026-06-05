@@ -1,0 +1,1105 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ scenario.title }}{% endblock %}
+
+{% block head %}
+<style>
+/* Sandbox Panel */
+.sandbox-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: .8rem 1rem;
+    margin-bottom: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.sandbox-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.sandbox-mode-badge {
+    font-size: 10px;
+    font-family: 'IBM Plex Mono', monospace;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: rgba(255,171,0,.1);
+    color: var(--warning);
+    border: 1px solid rgba(255,171,0,.2);
+}
+.sandbox-mode-badge.live {
+    background: rgba(0,200,83,.1);
+    color: var(--success);
+    border-color: rgba(0,200,83,.2);
+}
+.sandbox-uptime {
+    font-size: 11px;
+    font-family: 'IBM Plex Mono', monospace;
+    color: var(--muted);
+}
+.sb-btn {
+    padding: 5px 12px;
+    font-size: 11px;
+    font-family: 'IBM Plex Mono', monospace;
+    border-radius: 3px;
+    border: 1px solid;
+    cursor: pointer;
+    transition: .15s;
+    font-weight: 500;
+}
+.sb-btn-start {
+    background: rgba(0,200,83,.1);
+    border-color: rgba(0,200,83,.3);
+    color: var(--success);
+}
+.sb-btn-start:hover { background: rgba(0,200,83,.2); }
+.sb-btn-stop {
+    background: rgba(255,68,68,.1);
+    border-color: rgba(255,68,68,.3);
+    color: var(--danger);
+}
+.sb-btn-stop:hover { background: rgba(255,68,68,.2); }
+.sb-btn-reset {
+    background: rgba(0,102,204,.1);
+    border-color: rgba(0,102,204,.3);
+    color: var(--accent2);
+}
+.sb-btn-reset:hover { background: rgba(0,102,204,.2); }
+
+.back {
+    padding: 6px 14px;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    color: var(--muted);
+    font-size: 12px;
+    text-decoration: none;
+    font-family: 'IBM Plex Mono', monospace;
+    transition: 0.15s;
+}
+.back:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+}
+
+.lab-header {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    position: relative;
+    overflow: hidden;
+}
+.lab-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), #0066cc);
+}
+.lab-title {
+    font-size: 20px;
+    font-weight: 300;
+    margin-bottom: .5rem;
+}
+.lab-meta {
+    display: flex;
+    gap: 16px;
+    font-size: 12px;
+    color: var(--muted);
+    font-family: 'IBM Plex Mono', monospace;
+}
+
+/* Custom Notification Toast */
+#toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1100;
+}
+.toast {
+    padding: 12px 24px;
+    border-radius: 4px;
+    font-size: 13px;
+    font-family: 'IBM Plex Mono', monospace;
+    margin-bottom: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transform: translateY(-20px);
+    opacity: 0;
+    transition: all 0.3s;
+}
+.toast.show {
+    transform: translateY(0);
+    opacity: 1;
+}
+.toast-success {
+    background: rgba(0, 200, 83, 0.95);
+    color: #000;
+    border-left: 5px solid #005f28;
+}
+.toast-error {
+    background: rgba(255, 68, 68, 0.95);
+    color: #fff;
+    border-left: 5px solid #990000;
+}
+
+/* Split Layout */
+.grid-container {
+    display: grid;
+    grid-template-columns: 1.2fr 0.8fr;
+    gap: 1.5rem;
+    align-items: start;
+    margin-bottom: 1.5rem;
+}
+
+/* Left panel style */
+.workspace-column {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+/* Terminal style */
+.terminal-container {
+    background: #05070c;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    height: 380px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 0 15px rgba(0, 212, 255, 0.05);
+}
+.terminal-header {
+    background: #0b0f19;
+    border-bottom: 1px solid var(--border);
+    padding: 8px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    font-family: 'IBM Plex Mono', monospace;
+    color: var(--accent);
+}
+.terminal-dots {
+    display: flex;
+    gap: 6px;
+}
+.dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+.dot.red { background: #ff4444; }
+.dot.yellow { background: #ffab00; }
+.dot.green { background: #00c853; }
+
+.terminal-body {
+    flex: 1;
+    padding: 12px;
+    overflow-y: auto;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: #e2e8f0;
+    line-height: 1.5;
+}
+.term-line {
+    margin-bottom: 4px;
+    word-break: break-all;
+}
+.term-line.command-prompt {
+    color: #00d4ff;
+    font-weight: 500;
+}
+.term-line.error {
+    color: var(--danger);
+}
+.term-line.warning {
+    color: var(--warning);
+}
+.term-line.info {
+    color: #a855f7;
+}
+.term-line.output {
+    color: #cbd5e1;
+}
+
+.term-input-line {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 6px;
+}
+.term-prompt {
+    color: #00c853;
+    font-weight: 500;
+    white-space: nowrap;
+}
+#term-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #fff;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    padding: 0;
+}
+
+/* Evidence items with Inspect */
+.evidence-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.evidence-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    padding: 10px 12px;
+    border-radius: 3px;
+    transition: 0.15s;
+}
+.evidence-row:hover {
+    border-color: rgba(0, 212, 255, 0.2);
+}
+.evidence-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.evidence-name {
+    font-size: 12px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 500;
+}
+.evidence-size {
+    font-size: 10px;
+    color: var(--muted);
+    font-family: 'IBM Plex Mono', monospace;
+}
+.btn-inspect {
+    padding: 4px 10px;
+    background: rgba(0, 212, 255, 0.08);
+    border: 1px solid rgba(0, 212, 255, 0.2);
+    color: var(--accent);
+    font-size: 11px;
+    font-family: 'IBM Plex Mono', monospace;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: 0.15s;
+}
+.btn-inspect:hover {
+    background: var(--accent);
+    color: #000;
+}
+
+/* CTF Question List */
+.ctf-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 14px;
+    margin-bottom: 12px;
+    transition: 0.2s;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+.ctf-card.solved {
+    border-color: rgba(0, 200, 83, 0.3);
+    background: rgba(0, 200, 83, 0.02);
+}
+.ctf-q-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    font-family: 'IBM Plex Mono', monospace;
+    color: var(--muted);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+.ctf-points {
+    color: var(--accent);
+}
+.ctf-card.solved .ctf-points {
+    color: var(--success);
+}
+.ctf-q-text {
+    font-size: 13px;
+    margin-bottom: 12px;
+    line-height: 1.5;
+}
+.ctf-input-group {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+.ctf-input {
+    flex: 1;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 8px 12px;
+    border-radius: 3px;
+    font-size: 13px;
+    font-family: 'IBM Plex Mono', monospace;
+    outline: none;
+    transition: 0.15s;
+}
+.ctf-input:focus {
+    border-color: var(--accent);
+}
+.ctf-input[disabled] {
+    opacity: 0.8;
+    background: rgba(30, 45, 64, 0.2);
+    color: var(--success);
+    font-weight: 500;
+    border-color: rgba(0, 200, 83, 0.3);
+}
+.btn-ctf-submit {
+    padding: 8px 16px;
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+    border: none;
+    color: #000;
+    font-size: 12px;
+    font-weight: 500;
+    font-family: 'IBM Plex Mono', monospace;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: 0.15s;
+}
+.btn-ctf-submit:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+.btn-hint {
+    padding: 8px 12px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 12px;
+    font-family: 'IBM Plex Mono', monospace;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: 0.15s;
+}
+.btn-hint:hover {
+    color: var(--text);
+    border-color: var(--muted);
+}
+.ctf-feedback {
+    font-size: 11px;
+    font-family: 'IBM Plex Mono', monospace;
+    margin-top: 6px;
+    display: none;
+}
+.ctf-feedback.success {
+    color: var(--success);
+    display: block;
+}
+.ctf-feedback.error {
+    color: var(--danger);
+    display: block;
+}
+.ctf-hint-text {
+    font-size: 11px;
+    color: var(--warning);
+    background: rgba(255, 171, 0, 0.05);
+    border: 1px dashed rgba(255, 171, 0, 0.25);
+    padding: 8px 10px;
+    border-radius: 3px;
+    margin-top: 8px;
+    display: none;
+    font-family: 'IBM Plex Sans', sans-serif;
+    line-height: 1.4;
+}
+
+/* Modal hex viewer */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.85);
+    backdrop-filter: blur(4px);
+    justify-content: center;
+    align-items: center;
+}
+.modal-content {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    width: 85%;
+    max-width: 850px;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 0 30px rgba(0, 212, 255, 0.15);
+}
+.modal-header {
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.modal-title {
+    font-size: 14px;
+    font-family: 'IBM Plex Mono', monospace;
+    color: var(--accent);
+    font-weight: 500;
+}
+.modal-close {
+    color: var(--muted);
+    font-size: 24px;
+    cursor: pointer;
+    transition: 0.15s;
+    background: none;
+    border: none;
+}
+.modal-close:hover {
+    color: var(--danger);
+}
+.modal-body {
+    padding: 18px;
+    overflow-y: auto;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: #cbd5e1;
+    background: #05070c;
+}
+.hex-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.hex-table th {
+    border-bottom: 1px solid var(--border);
+    padding: 6px;
+    color: var(--muted);
+    font-weight: 500;
+    text-align: left;
+}
+.hex-table td {
+    padding: 3px 6px;
+    border-bottom: none;
+}
+.hex-offset {
+    color: #64748b;
+    font-weight: 500;
+}
+.hex-bytes {
+    color: #00d4ff;
+    letter-spacing: 1px;
+}
+.hex-ascii {
+    color: #00c853;
+}
+
+/* Report & Submit */
+.report-section {
+    margin-top: 1.5rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1.5rem;
+}
+textarea {
+    width: 100%;
+    height: 150px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    color: var(--text);
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 13px;
+    padding: 12px;
+    resize: vertical;
+    outline: none;
+    margin-top: .8rem;
+    transition: 0.15s;
+}
+textarea:focus {
+    border-color: var(--accent);
+}
+.btn-submit {
+    padding: 10px 24px;
+    background: linear-gradient(135deg, #0066cc, var(--accent));
+    border: none;
+    border-radius: 3px;
+    color: #000;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: 'IBM Plex Mono', monospace;
+    margin-top: .8rem;
+    transition: 0.15s;
+}
+.btn-submit:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+.submitted-box {
+    background: rgba(0, 200, 83, .05);
+    border: 1px solid rgba(0, 200, 83, .2);
+    border-radius: 3px;
+    padding: 1rem;
+    font-size: 13px;
+    color: #00c853;
+    font-family: 'IBM Plex Mono', monospace;
+    margin-top: .8rem;
+    line-height: 1.5;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-6px); }
+    40%, 80% { transform: translateX(6px); }
+}
+
+/* Responsive design */
+@media (max-width: 992px) {
+    .grid-container {
+        grid-template-columns: 1fr;
+    }
+}
+@media (max-width: 768px) {
+    .navbar {
+        padding: 0 1rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block navbar %}
+<nav class="navbar">
+  <span class="brand">[ ForensicsLab ]</span>
+  <a class="back" href="/dashboard">← Quay lại</a>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="content">
+  <div id="toast-container"></div>
+
+  <div class="lab-header">
+    <div class="lab-title">{{ scenario.title }}</div>
+    <div style="font-size:13px;color:var(--muted);margin:.5rem 0">{{ scenario.description }}</div>
+    <div class="lab-meta">
+      <span>⏱ {{ scenario.duration }}</span>
+      <span>🔧 {{ scenario.tools }}</span>
+      <span>📊 {{ scenario.level }}</span>
+    </div>
+  </div>
+
+  <div class="grid-container">
+    <div class="workspace-column">
+
+      <!-- SANDBOX CONTROL PANEL (Layer 4) -->
+      <div class="sandbox-panel" id="sandbox-panel">
+        <div class="sandbox-panel-header">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-family:'IBM Plex Mono',monospace;">Sandbox VM</span>
+            <span class="sandbox-mode-badge" id="sb-mode-badge">
+              {% if sandbox_status.mode == 'docker_live' and sandbox_status.status == 'running' %}
+              🟢 Docker Live
+              {% else %}
+              🟡 Simulated
+              {% endif %}
+            </span>
+          </div>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <span class="sandbox-uptime" id="sb-uptime"
+              data-running="{{ '1' if sandbox_status.status == 'running' else '0' }}"
+              data-seconds="{{ sandbox_status.uptime_seconds }}"></span>
+            {% if docker_available %}
+              {% if sandbox_status.status == 'running' %}
+              <button class="sb-btn sb-btn-stop" id="sb-stop-btn" onclick="sandboxStop()">■ Stop VM</button>
+              <button class="sb-btn sb-btn-reset" onclick="sandboxReset()">↺ Reset</button>
+              {% else %}
+              <button class="sb-btn sb-btn-start" id="sb-start-btn" onclick="sandboxStart()">
+                {% if image_ready %}▶ Start VM{% else %}⚠ Build image trước{% endif %}
+              </button>
+              {% endif %}
+            {% else %}
+            <span style="font-size:10px;color:var(--muted);font-family:'IBM Plex Mono',monospace;">Docker N/A</span>
+            {% endif %}
+          </div>
+        </div>
+        {% if docker_available and not image_ready %}
+        <div style="font-size:10px;color:var(--warning);padding:4px 0;font-family:'IBM Plex Mono',monospace;">
+          Chạy: <code style="background:rgba(255,171,0,.1);padding:2px 6px;border-radius:2px;">docker build -f Dockerfile.forensics -t forensicslab:latest .</code>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- EVIDENCE FILES PANEL (Layer 5) -->
+      <div class="panel" style="margin-bottom: 0;">
+        <div class="panel-title" style="display:flex;justify-content:space-between;align-items:center;">
+          <span>Dữ liệu chứng cứ (Evidence Repository)</span>
+          <span style="font-size:10px;color:var(--muted);">SHA-256 Verified</span>
+        </div>
+        <div class="evidence-list">
+          {% for ev in evidence_files %}
+          <div class="evidence-row" id="ev-row-{{ ev.id }}">
+            <div class="evidence-info">
+              <span class="evidence-name">
+                {% if ev.file_type in ['pcapng','pcap'] %}📡
+                {% elif ev.file_type|lower == 'e01' %}💾
+                {% elif ev.file_type == 'vmem' %}🧠
+                {% elif ev.file_type == 'txt' %}📄
+                {% elif ev.file_type == 'sha256' %}🔑
+                {% else %}📁{% endif %}
+                {{ ev.filename }}
+              </span>
+              <span class="evidence-size">
+                {% if ev.size > 1048576 %}{{ "%.1f"|format(ev.size/1048576) }} MB
+                {% elif ev.size > 1024 %}{{ "%.1f"|format(ev.size/1024) }} KB
+                {% else %}{{ ev.size }} B{% endif %}
+                &nbsp;·&nbsp;
+                <span style="color:rgba(0,212,255,.6);" title="{{ ev.sha256 }}">SHA256: {{ ev.sha256[:16] }}…</span>
+              </span>
+            </div>
+            <div style="display:flex;gap:5px;align-items:center;">
+              <span class="ev-integrity" id="ev-integrity-{{ ev.id }}" style="font-size:9px;font-family:'IBM Plex Mono',monospace;color:var(--muted);">—</span>
+              <button class="btn-inspect" onclick="verifyEvidence({{ ev.id }})" title="Verify SHA-256">Verify</button>
+              <button class="btn-inspect" onclick='inspectFile({{ ev.id }}, {{ ev.filename|tojson }})' title="Xem Hex">Hex</button>
+              <a href="/api/evidence/download/{{ ev.id }}" class="btn-inspect" style="text-decoration:none;" title="Tải xuống">↓</a>
+            </div>
+          </div>
+          {% else %}
+          <div style="color:var(--muted);font-size:12px;padding:.5rem 0;">Chưa có evidence files. Giảng viên cần upload.</div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- TERMINAL (with mode switching) -->
+      <div class="terminal-container">
+        <div class="terminal-header">
+          <span>KALI FORENSICS COMMAND CONSOLE</span>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span id="terminal-mode-badge" style="font-size:10px;padding:2px 8px;border-radius:10px;background:rgba(255,171,0,.1);color:var(--warning);border:1px solid rgba(255,171,0,.2);font-family:'IBM Plex Mono',monospace;">SIMULATED</span>
+            <div class="terminal-dots">
+              <span class="dot red"></span>
+              <span class="dot yellow"></span>
+              <span class="dot green"></span>
+            </div>
+          </div>
+        </div>
+        <div id="terminal-mount"></div>
+      </div>
+
+      <!-- ── Gợi ý sử dụng công cụ Forensic ── -->
+      <div class="panel" style="margin-top: 1rem;">
+        <div class="panel-title" style="color: var(--accent); display: flex; align-items: center; gap: 8px;">
+          <span>💡</span> Hướng dẫn & Gợi ý Công cụ
+        </div>
+        <div style="font-size: 13px; line-height: 1.6; color: var(--text);">
+          <p style="margin-top: 0;">Bạn có thể sử dụng các lệnh sau trong sandbox terminal để phân tích chứng cứ:</p>
+          <ul style="padding-left: 1.2rem; margin-bottom: 0; font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #7dd3fc;">
+            <li><strong style="color: var(--text);">tshark -r capture_traffic.pcapng -V</strong> : Xem chi tiết đầy đủ các trường của gói tin (rất hữu ích để tìm flag, DNS query, hoặc HTTP headers).</li>
+            <li><strong style="color: var(--text);">tshark -r capture_traffic.pcapng -Y "dns"</strong> : Lọc chỉ hiển thị các gói tin DNS.</li>
+            <li><strong style="color: var(--text);">tshark -r capture_traffic.pcapng -Y "http"</strong> : Lọc chỉ hiển thị các gói tin HTTP.</li>
+            <li><strong style="color: var(--text);">strings capture_traffic.pcapng | grep -i flag</strong> : Tìm nhanh chuỗi ký tự chứa từ khóa "flag".</li>
+            <li><strong style="color: var(--text);">capinfos capture_traffic.pcapng</strong> : Xem thông tin tóm tắt của file pcapng (kích thước, số gói tin, thời gian bắt đầu/kết thúc).</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="workspace-column">
+      <div class="panel" style="margin-bottom: 0; min-height: 520px;">
+        <div class="panel-title">Nhiệm vụ Capture The Flag (CTF)</div>
+        <p style="font-size:11px; color:var(--muted); margin-bottom: 12px; font-family:'IBM Plex Mono', monospace; line-height: 1.4;">
+          * Hãy phân tích chứng cứ ở terminal bên trái và nộp flag thích hợp cho từng nhiệm vụ. Điểm CTF tối đa: 6 điểm.
+        </p>
+        <div id="ctf-list">
+          {% for q in questions %}
+          <div class="ctf-card {% if q.is_correct == 1 %}solved{% endif %}" id="ctf-card-{{ q.id }}">
+            <div class="ctf-q-header">
+              <span>Nhiệm vụ 0{{ loop.index }}</span>
+              <span class="ctf-points">+{{ q.points }}đ</span>
+            </div>
+            <div class="ctf-q-text">{{ q.question_text }}</div>
+
+            <div class="ctf-input-group">
+              <input type="text"
+                     id="ctf-input-{{ q.id }}"
+                     class="ctf-input"
+                     placeholder="Nhập kết quả..."
+                     value="{% if q.is_correct == 1 %}{{ q.submitted_flag }}{% endif %}"
+                     {% if q.is_correct == 1 %}disabled{% endif %}>
+              {% if q.is_correct != 1 %}
+              <button class="btn-ctf-submit" id="btn-submit-{{ q.id }}" onclick="submitFlag({{ q.id }})">Nộp</button>
+              {% endif %}
+              <button class="btn-hint" onclick="toggleHint({{ q.id }})">Gợi ý</button>
+            </div>
+
+            <div class="ctf-feedback {% if q.is_correct == 1 %}success{% endif %}" id="ctf-feedback-{{ q.id }}">
+              {% if q.is_correct == 1 %}&#10003; Hoàn thành (Lưu lúc {{ q.submitted_at }}){% endif %}
+            </div>
+            <div class="ctf-hint-text" id="ctf-hint-{{ q.id }}">
+              Gợi ý: {{ q.hint }}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="report-section">
+    <div class="panel-title">Nộp báo cáo phân tích tóm tắt</div>
+    <p style="font-size: 11px; color: var(--muted); margin-bottom: 12px; font-family: 'IBM Plex Mono', monospace; line-height: 1.4;">
+      * Báo cáo này sẽ được giảng viên đánh giá thủ công (tối đa 4 điểm) và cộng dồn với điểm CTF tự động (tối đa 6 điểm) để tạo thành tổng điểm môn học tối đa 10.
+    </p>
+    {% if progress and progress.status in ['submitted','graded'] %}
+    <div class="submitted-box">
+      ✓ Đã nộp báo cáo phân tích lúc {{ progress.submitted_at }}
+      {% if progress.status == 'graded' %}
+        <br><b>Kết quả chấm điểm:</b> 
+        Điểm CTF: {{ (progress.score - progress.teacher_score)|round(1) }}đ | 
+        Điểm Báo cáo: {{ progress.teacher_score|round(1) }}đ | 
+        <b>Tổng điểm cuối cùng: {{ progress.score|round(1) }}/10</b>
+      {% else %}
+        <br><b>Trạng thái:</b> Đang chờ giảng viên chấm điểm Báo cáo. Điểm CTF tạm tính: {{ progress.score|round(1) }}đ
+      {% endif %}
+    </div>
+    <textarea readonly>{{ progress.report }}</textarea>
+    {% else %}
+    <form method="POST" action="/submit_report/{{ scenario.id }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+      <textarea name="report" placeholder="Nhập tóm tắt phân tích hành vi tấn công, tóm tắt chứng cứ tìm thấy và đề xuất khắc phục... (Ví dụ: IP nguồn quét mạng, lỗ hổng SQLi, backdoor shell, cronjob persistence...)">{% if progress %}{{ progress.report }}{% endif %}</textarea>
+      <button type="submit" class="btn-submit">Nộp báo cáo & Hoàn thành →</button>
+    </form>
+    {% endif %}
+  </div>
+</div>
+
+<div id="hex-modal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-title">HEX VIEW</span>
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+    </div>
+    <div class="modal-body" id="hex-output"></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/terminal.js') }}"></script>
+<script>
+  window.scenarioId = {{ scenario.id }};
+  window.csrfToken = '{{ csrf_token() }}';
+  window.dockerAvailable = {{ 'true' if docker_available else 'false' }};
+  window.sandboxRunning = {{ 'true' if sandbox_status.status == 'running' else 'false' }};
+
+  // ── Dynamic per-student values for Scenario 3 ─────────────────────────────
+  window.dynamicValues = {% if dynamic_values %}{{ dynamic_values | tojson }}{% else %}null{% endif %};
+
+  // ── Terminal init (with Docker live mode support) ──────────────────────────
+  let terminalInstance = null;
+  document.addEventListener('DOMContentLoaded', () => {
+      terminalInstance = new window.ForensicTerminal('terminal-mount', window.scenarioId, {
+          dockerMode: window.sandboxRunning && window.dockerAvailable,
+          dynamicValues: window.dynamicValues
+      });
+      if (window.sandboxRunning) updateTerminalModeBadge('docker_live');
+      startUptimeTicker();
+  });
+
+  // ── Sandbox controls ───────────────────────────────────────────────────────
+  async function sandboxStart() {
+    const btn = document.getElementById('sb-start-btn');
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ Starting...'; }
+    showToast('Đang khởi động sandbox...', 'success');
+    try {
+      const r = await fetch(`/api/sandbox/start/{{ scenario.id }}`, {
+        method: 'POST',
+        headers: {'X-CSRFToken': window.csrfToken, 'Content-Type': 'application/json'}
+      });
+      const d = await r.json();
+      if (d.success) {
+        showToast('Sandbox Docker Live đã khởi động!', 'success');
+        window.sandboxRunning = true;
+        updateTerminalModeBadge('docker_live');
+        if (terminalInstance) terminalInstance.setDockerMode(true);
+        setTimeout(() => location.reload(), 1500);
+      } else {
+        showToast(d.message || 'Không thể start sandbox', 'error');
+        if (btn) { btn.disabled = false; btn.textContent = '▶ Start VM'; }
+      }
+    } catch(e) {
+      showToast('Lỗi kết nối', 'error');
+      if (btn) { btn.disabled = false; btn.textContent = '▶ Start VM'; }
+    }
+  }
+
+  async function sandboxStop() {
+    if (!confirm('Dừng sandbox? Tất cả tiến trình trong VM sẽ bị tắt.')) return;
+    showToast('Đang dừng sandbox...', 'success');
+    try {
+      const r = await fetch(`/api/sandbox/stop/{{ scenario.id }}`, {
+        method: 'POST',
+        headers: {'X-CSRFToken': window.csrfToken}
+      });
+      const d = await r.json();
+      showToast(d.message, d.success ? 'success' : 'error');
+      if (d.success) setTimeout(() => location.reload(), 1000);
+    } catch(e) { showToast('Lỗi kết nối', 'error'); }
+  }
+
+  async function sandboxReset() {
+    if (!confirm('Reset sandbox? VM sẽ được khởi động lại từ đầu.')) return;
+    showToast('Đang reset sandbox...', 'success');
+    try {
+      const r = await fetch(`/api/sandbox/reset/{{ scenario.id }}`, {
+        method: 'POST',
+        headers: {'X-CSRFToken': window.csrfToken}
+      });
+      const d = await r.json();
+      showToast(d.message, d.success ? 'success' : 'error');
+      if (d.success) setTimeout(() => location.reload(), 1500);
+    } catch(e) { showToast('Lỗi kết nối', 'error'); }
+  }
+
+  function updateTerminalModeBadge(mode) {
+    const badge = document.getElementById('terminal-mode-badge');
+    const sbBadge = document.getElementById('sb-mode-badge');
+    if (mode === 'docker_live') {
+      if (badge) {
+        badge.textContent = 'DOCKER LIVE';
+        badge.style.background = 'rgba(0,200,83,.1)';
+        badge.style.color = 'var(--success)';
+        badge.style.borderColor = 'rgba(0,200,83,.2)';
+      }
+      if (sbBadge) { sbBadge.textContent = '\uD83D\uDFE2 Docker Live'; sbBadge.classList.add('live'); }
+    } else {
+      if (badge) {
+        badge.textContent = 'SIMULATED';
+        badge.style.background = 'rgba(255,171,0,.1)';
+        badge.style.color = 'var(--warning)';
+        badge.style.borderColor = 'rgba(255,171,0,.2)';
+      }
+      if (sbBadge) { sbBadge.textContent = '\uD83D\uDFE1 Simulated'; sbBadge.classList.remove('live'); }
+    }
+  }
+
+  // ── Uptime ticker ──────────────────────────────────────────────────────────
+  function startUptimeTicker() {
+    const el = document.getElementById('sb-uptime');
+    if (!el || el.dataset.running !== '1') return;
+    let seconds = parseInt(el.dataset.seconds || '0');
+    function fmt(s) {
+      const h = Math.floor(s/3600), m = Math.floor((s%3600)/60), ss = s%60;
+      return h > 0 ? `${h}h ${m}m ${ss}s` : m > 0 ? `${m}m ${ss}s` : `${ss}s`;
+    }
+    el.textContent = fmt(seconds);
+    setInterval(() => { seconds++; el.textContent = fmt(seconds); }, 1000);
+    // Auto-stop warning at 28 min
+    setInterval(() => {
+      if (seconds >= 28*60 && seconds < 28*60+5) showToast('Sandbox sẽ tự động dừng sau 2 phút không hoạt động!', 'error');
+    }, 5000);
+  }
+
+  // ── Evidence Verify (Layer 5) ──────────────────────────────────────────────
+  async function verifyEvidence(fileId) {
+    const el = document.getElementById(`ev-integrity-${fileId}`);
+    if (el) el.textContent = '...';
+    try {
+      const r = await fetch(`/api/evidence/verify/${fileId}`);
+      const d = await r.json();
+      if (!r.ok) {
+        throw new Error(d.message || d.error || 'Không thể kiểm tra hash');
+      }
+      if (el) {
+        if (d.intact) {
+          el.textContent = '\u2713 OK';
+          el.style.color = 'var(--success)';
+        } else {
+          el.textContent = '\u26a0 FAIL';
+          el.style.color = 'var(--danger)';
+        }
+      }
+      showToast(d.message || (d.intact ? 'Hash khớp — Toàn vẹn' : 'Hash không khớp!'), d.intact ? 'success' : 'error');
+    } catch(e) {
+      if (el) el.textContent = 'err';
+      showToast(e.message || 'Lỗi kiểm tra hash', 'error');
+    }
+  }
+
+  function submitFlag(questionId) {
+      const inputEl = document.getElementById(`ctf-input-${questionId}`);
+      const btnEl = document.getElementById(`btn-submit-${questionId}`);
+      const flag = inputEl.value.trim();
+      const feedbackEl = document.getElementById(`ctf-feedback-${questionId}`);
+      const cardEl = document.getElementById(`ctf-card-${questionId}`);
+      
+      if (!flag) {
+          showToast('Vui lòng nhập kết quả trước khi nộp!', 'error');
+          return;
+      }
+      
+      feedbackEl.style.display = 'none';
+      feedbackEl.className = 'ctf-feedback';
+      
+      fetch(`/api/submit_flag/{{ scenario.id }}`, {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': '{{ csrf_token() }}'
+          },
+          body: JSON.stringify({
+              question_id: questionId,
+              flag: flag
+          })
+      })
+      .then(res => res.json())
+      .then(data => {
+          if (data.success) {
+              feedbackEl.textContent = data.message || '✓ Chính xác!';
+              feedbackEl.className = 'ctf-feedback success';
+              feedbackEl.style.display = 'block';
+              cardEl.classList.add('solved');
+              inputEl.disabled = true;
+              if (btnEl) btnEl.remove();
+              showToast('Điểm CTF của bạn đã được cập nhật!', 'success');
+              
+              setTimeout(() => {
+                  location.reload();
+              }, 1200);
+          } else {
+              feedbackEl.textContent = data.message || '✗ Sai flag, hãy thử lại!';
+              feedbackEl.className = 'ctf-feedback error';
+              feedbackEl.style.display = 'block';
+              
+              cardEl.style.animation = 'shake 0.3s ease-in-out';
+              setTimeout(() => { cardEl.style.animation = ''; }, 300);
+              showToast('Flag chưa chính xác, hãy thử lại!', 'error');
+          }
+      })
+      .catch(err => {
+          console.error(err);
+          showToast('Lỗi hệ thống hoặc lỗi kết nối mạng!', 'error');
+      });
+  }
+
+  function toggleHint(questionId) {
+      const hintEl = document.getElementById(`ctf-hint-${questionId}`);
+      if (hintEl.style.display === 'block') {
+          hintEl.style.display = 'none';
+      } else {
+          hintEl.style.display = 'block';
+      }
+  }
+
+  async function inspectFile(fileId, filename) {
+      const modal = document.getElementById('hex-modal');
+      const modalTitle = document.getElementById('modal-title');
+      const hexOutput = document.getElementById('hex-output');
+      
+      modalTitle.textContent = `HEX VIEW: ${filename}`;
+      hexOutput.innerHTML = '<div style="color:var(--accent); font-family:monospace;">Loading Hex view...</div>';
+      modal.style.display = 'flex';
+
+      try {
+          const response = await fetch(`/api/evidence/hex/${fileId}`);
+          const data = await response.json();
+          if (!response.ok) {
+              throw new Error(data.error || 'Không thể tải hex preview');
+          }
+
+          let summary = `<div style="margin-bottom:10px;color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:11px;">Preview ${data.preview_bytes} bytes`;
+          if (data.truncated) {
+              summary += ` / ${data.total_size} bytes total`;
+          }
+          summary += '</div>';
+
+          hexOutput.innerHTML = summary + renderHexTable(data.bytes || []);
+      } catch (error) {
+          hexOutput.innerHTML = `<div style="color:var(--danger); font-family:monospace;">${escapeHtml(error.message)}</div>`;
+          showToast(error.message || 'Không thể tải Hex view', 'error');
+      }
+  }
+
+  function renderHexTable(bytes) {
+      let html = '<table class="hex-table">';
+      html += '<thead><tr><th>Offset</th><th>00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F</th><th>ASCII</th></tr></thead><tbody>';
+      
+      for (let offset = 0; offset < bytes.length; offset += 16) {
+          const offsetStr = '00000000' + offset.toString(16).toUpperCase();
+          const finalOffset = offsetStr.substring(offsetStr.length - 8);
+          
+          let hexPart = '';
+          let asciiPart = '';
+          
+          for (let j = 0; j < 16; j++) {
+              const idx = offset + j;
+              if (idx < bytes.length) {
+                  const b = bytes[idx];
+                  const bStr = ('00' + b.toString(16).toUpperCase()).slice(-2);
+                  hexPart += bStr + ' ';
+                  
+                  if (b >= 32 && b <= 126) {
+                      asciiPart += String.fromCharCode(b);
+                  } else if (b === 10) {
+                      asciiPart += '↵';
+                  } else {
+                      asciiPart += '.';
+                  }
+              } else {
+                  hexPart += '&nbsp;&nbsp; ';
+                  asciiPart += ' ';
+              }
+          }
+          
+          html += `<tr>
+              <td class="hex-offset">${finalOffset}</td>
+              <td class="hex-bytes">${hexPart}</td>
+              <td class="hex-ascii">${escapeHtml(asciiPart).replace(/ /g, '&nbsp;')}</td>
+          </tr>`;
+      }
+      return html + '</tbody></table>';
+  }
+
+  function escapeHtml(str) {
+      return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  function closeModal() {
+      document.getElementById('hex-modal').style.display = 'none';
+  }
+
+  function showToast(message, type = 'success') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = `toast toast-${type}`;
+      toast.innerHTML = type === 'success' ? `<span>✓</span> ${message}` : `<span>✗</span> ${message}`;
+      
+      container.appendChild(toast);
+      
+      toast.offsetHeight;
+      toast.classList.add('show');
+      
+      setTimeout(() => {
+          toast.classList.remove('show');
+          setTimeout(() => {
+              toast.remove();
+          }, 300);
+      }, 3000);
+  }
+</script>
+{% endblock %}

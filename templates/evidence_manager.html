@@ -1,0 +1,388 @@
+{% extends 'base.html' %}
+{% block title %}Quản lý Evidence{% endblock %}
+
+{% block head %}
+<style>
+.em-header {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    position: relative;
+    overflow: hidden;
+}
+.em-header::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, #7c3aed, var(--accent));
+}
+.em-title { font-size: 20px; font-weight: 300; margin-bottom: .4rem; }
+
+.infra-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+.infra-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1.2rem;
+    text-align: center;
+}
+.infra-icon { font-size: 28px; margin-bottom: .5rem; }
+.infra-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--muted);
+    font-family: 'IBM Plex Mono', monospace;
+    margin-bottom: .3rem;
+}
+.infra-value {
+    font-size: 14px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 500;
+}
+.status-ok { color: var(--success); }
+.status-warn { color: var(--warning); }
+.status-err { color: var(--danger); }
+
+.evidence-table-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+}
+.ev-row:hover td { background: rgba(255,255,255,.025); }
+.ev-row td { vertical-align: middle; }
+.hash-cell {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.verify-btn {
+    padding: 4px 10px;
+    background: rgba(0, 212, 255, .08);
+    border: 1px solid rgba(0, 212, 255, .2);
+    color: var(--accent);
+    font-size: 11px;
+    font-family: 'IBM Plex Mono', monospace;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: .15s;
+}
+.verify-btn:hover { background: var(--accent); color: #000; }
+.custody-btn {
+    padding: 4px 10px;
+    background: rgba(124, 58, 237, .1);
+    border: 1px solid rgba(124, 58, 237, .25);
+    color: #a78bfa;
+    font-size: 11px;
+    font-family: 'IBM Plex Mono', monospace;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: .15s;
+}
+.custody-btn:hover { background: rgba(124, 58, 237, .25); }
+.integrity-badge {
+    font-size: 10px;
+    font-family: 'IBM Plex Mono', monospace;
+    padding: 2px 8px;
+    border-radius: 12px;
+}
+.integrity-ok { background: rgba(0,200,83,.1); color: var(--success); border: 1px solid rgba(0,200,83,.2); }
+.integrity-fail { background: rgba(255,68,68,.1); color: var(--danger); border: 1px solid rgba(255,68,68,.2); }
+.integrity-unknown { background: rgba(100,116,139,.1); color: var(--muted); border: 1px solid var(--border); }
+
+/* Modal */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0; top: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,.85);
+    backdrop-filter: blur(4px);
+    justify-content: center;
+    align-items: center;
+}
+.modal-content {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    width: 90%;
+    max-width: 700px;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 0 40px rgba(124, 58, 237, 0.2);
+}
+.modal-header {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.modal-title { font-size: 13px; font-family: 'IBM Plex Mono', monospace; color: var(--accent); font-weight: 500; }
+.modal-close { color: var(--muted); font-size: 22px; cursor: pointer; background: none; border: none; }
+.modal-close:hover { color: var(--danger); }
+.modal-body { padding: 18px; overflow-y: auto; }
+
+.custody-entry {
+    display: flex;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(30,45,64,.5);
+    font-size: 12px;
+}
+.custody-entry:last-child { border-bottom: none; }
+.custody-time { font-family: 'IBM Plex Mono', monospace; color: var(--muted); white-space: nowrap; min-width: 130px; }
+.custody-who { color: var(--accent); font-family: 'IBM Plex Mono', monospace; }
+.custody-action { color: var(--text); }
+
+.docker-build-panel {
+    background: var(--surface);
+    border: 1px solid rgba(255,171,0,.2);
+    border-radius: 4px;
+    padding: 1.2rem 1.5rem;
+    margin-bottom: 1.5rem;
+}
+.code-block {
+    background: #05070c;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 12px 16px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: #00c853;
+    margin-top: .8rem;
+    user-select: all;
+}
+</style>
+{% endblock %}
+
+{% block navbar %}
+<nav class="navbar">
+  <span class="brand">[ ForensicsLab ]</span>
+  <div class="nav-links">
+    <a href="/dashboard" class="nav-link">Dashboard</a>
+    <a href="/accounts" class="nav-link">Tài khoản</a>
+    <a href="/teacher/evidence" class="nav-link active">Evidence</a>
+  </div>
+  <div class="nav-right">
+    <span>{{ session.fullname }}</span>
+    <a href="/logout" class="logout">Đăng xuất</a>
+  </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="content">
+  <div class="em-header">
+    <div class="em-title">Kho dữ liệu điều tra số (Evidence Repository)</div>
+    <div style="font-size:13px;color:var(--muted);margin:.4rem 0">
+      Quản lý file chứng cứ, kiểm tra toàn vẹn SHA-256, xem lịch sử truy cập (Chain of Custody).
+    </div>
+  </div>
+
+  <!-- Infrastructure Status -->
+  <div class="infra-grid">
+    <div class="infra-card">
+      <div class="infra-icon">🐳</div>
+      <div class="infra-label">Docker Engine</div>
+      <div class="infra-value {% if docker_available %}status-ok{% else %}status-err{% endif %}">
+        {% if docker_available %}Hoạt động{% else %}Không kết nối{% endif %}
+      </div>
+    </div>
+    <div class="infra-card">
+      <div class="infra-icon">📦</div>
+      <div class="infra-label">Sandbox Image</div>
+      <div class="infra-value {% if image_ready %}status-ok{% else %}status-warn{% endif %}">
+        {% if image_ready %}forensicslab:latest{% else %}Chưa build{% endif %}
+      </div>
+    </div>
+    <div class="infra-card">
+      <div class="infra-icon">🗄️</div>
+      <div class="infra-label">Evidence Files</div>
+      <div class="infra-value status-ok">{{ files|length }} tệp</div>
+    </div>
+  </div>
+
+  <!-- Docker Build Panel (if image not ready) -->
+  {% if docker_available and not image_ready %}
+  <div class="docker-build-panel">
+    <div style="font-size:13px;color:var(--warning);font-weight:500;margin-bottom:.4rem;">
+      ⚠ Image sandbox chưa được build. Chạy lệnh sau để build:
+    </div>
+    <div class="code-block">docker build -f Dockerfile.forensics -t forensicslab:latest .</div>
+    <div style="font-size:11px;color:var(--muted);margin-top:.6rem;">
+      Lần đầu build sẽ mất 5–15 phút do tải image Kali Linux (~700MB). Chỉ cần build 1 lần.
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Rebuild Hashes Button -->
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.8rem;">
+    <div class="panel-title" style="margin:0;border:none;padding:0;">Danh sách Evidence Files</div>
+    <button class="btn" onclick="rebuildHashes()" style="font-size:11px;padding:7px 14px;">
+      ↻ Xác minh lại tất cả hash
+    </button>
+  </div>
+
+  <!-- Evidence Table -->
+  <div class="evidence-table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Kịch bản</th>
+          <th>Tên file</th>
+          <th>Loại</th>
+          <th>Kích thước</th>
+          <th>SHA-256</th>
+          <th>Toàn vẹn</th>
+          <th>Hành động</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for f in files %}
+        <tr class="ev-row" id="ev-row-{{ f.id }}">
+          <td>
+            <span class="badge b-basic">Lab {{ f.scenario_id }}</span>
+          </td>
+          <td style="font-family:'IBM Plex Mono',monospace;font-size:12px;">
+            {{ f.filename }}
+            <div style="font-size:10px;color:var(--muted);">{{ f.description }}</div>
+          </td>
+          <td>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--accent);">
+              .{{ f.file_type }}
+            </span>
+          </td>
+          <td style="font-family:'IBM Plex Mono',monospace;font-size:11px;">
+            {% if f.size > 1048576 %}
+              {{ "%.1f"|format(f.size/1048576) }} MB
+            {% elif f.size > 1024 %}
+              {{ "%.1f"|format(f.size/1024) }} KB
+            {% else %}
+              {{ f.size }} B
+            {% endif %}
+          </td>
+          <td class="hash-cell" title="{{ f.sha256 }}">{{ f.sha256[:32] }}...</td>
+          <td id="integrity-{{ f.id }}">
+            <span class="integrity-badge integrity-unknown">Chưa xác minh</span>
+          </td>
+          <td>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              <button class="verify-btn" onclick="verifyFile({{ f.id }})">Verify</button>
+              <button class="custody-btn" onclick="showCustody({{ f.id }}, '{{ f.filename }}')">Custody</button>
+              <a href="/api/evidence/download/{{ f.id }}" class="verify-btn" style="text-decoration:none;">↓</a>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- SHA-256 Explanation -->
+  <div class="panel" style="border-color:rgba(0,212,255,.1);">
+    <div class="panel-title">Nguyên tắc toàn vẹn chứng cứ số (SHA-256)</div>
+    <div style="font-size:13px;color:var(--muted);line-height:1.7;">
+      Mỗi file chứng cứ được tính mã băm SHA-256 tại thời điểm thu thập. Khi xác minh,
+      hệ thống tính lại hash và so sánh với giá trị đã lưu — nếu khớp, file chưa bị thay đổi;
+      nếu khác, file có thể đã bị giả mạo hoặc hỏng. Đây là nguyên tắc cơ bản của <em>Chain of Custody</em> trong điều tra số.
+    </div>
+  </div>
+</div>
+
+<!-- Chain of Custody Modal -->
+<div id="custody-modal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <span class="modal-title" id="custody-modal-title">CHAIN OF CUSTODY</span>
+      <button class="modal-close" onclick="closeCustodyModal()">&times;</button>
+    </div>
+    <div class="modal-body" id="custody-modal-body">
+      <div style="color:var(--muted);font-size:13px;">Đang tải...</div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function verifyFile(fileId) {
+  const badge = document.getElementById(`integrity-${fileId}`);
+  badge.innerHTML = '<span class="integrity-badge integrity-unknown">Đang kiểm tra...</span>';
+  try {
+    const r = await fetch(`/api/evidence/verify/${fileId}`);
+    const d = await r.json();
+    if (d.intact) {
+      badge.innerHTML = '<span class="integrity-badge integrity-ok">✓ Toàn vẹn</span>';
+    } else {
+      badge.innerHTML = `<span class="integrity-badge integrity-fail">✗ Bị thay đổi!</span>`;
+    }
+  } catch(e) {
+    badge.innerHTML = '<span class="integrity-badge integrity-fail">Lỗi kết nối</span>';
+  }
+}
+
+async function rebuildHashes() {
+  if (!confirm('Xác minh lại SHA-256 tất cả file? Quá trình này có thể mất vài giây.')) return;
+  const res = await fetch('/api/teacher/rebuild_hashes', {
+    method: 'POST',
+    headers: {'X-CSRFToken': '{{ csrf_token() }}'}
+  });
+  const d = await res.json();
+  if (d.success) {
+    alert(`Đã cập nhật hash cho ${d.updated} file.`);
+    location.reload();
+  }
+}
+
+async function showCustody(fileId, filename) {
+  const modal = document.getElementById('custody-modal');
+  const title = document.getElementById('custody-modal-title');
+  const body = document.getElementById('custody-modal-body');
+  title.textContent = `CHAIN OF CUSTODY — ${filename}`;
+  body.innerHTML = '<div style="color:var(--muted);font-size:12px;font-family:\'IBM Plex Mono\',monospace;">Đang tải lịch sử...</div>';
+  modal.style.display = 'flex';
+  try {
+    const r = await fetch(`/api/evidence/custody/${fileId}`);
+    const d = await r.json();
+    if (!d.logs || d.logs.length === 0) {
+      body.innerHTML = '<div style="color:var(--muted);font-size:13px;">Chưa có lịch sử truy cập nào.</div>';
+      return;
+    }
+    const actionLabel = {verify: '🔍 Xác minh', download: '⬇ Tải xuống', view: '👁 Xem'};
+    body.innerHTML = d.logs.map(l => `
+      <div class="custody-entry">
+        <span class="custody-time">${l.accessed_at}</span>
+        <span class="custody-who">${l.fullname} (${l.role})</span>
+        <span class="custody-action">${actionLabel[l.action] || l.action}</span>
+        <span style="color:var(--muted);font-size:10px;font-family:'IBM Plex Mono',monospace;margin-left:auto;">${l.ip_address}</span>
+      </div>`).join('');
+  } catch(e) {
+    body.innerHTML = '<div style="color:var(--danger);font-size:12px;">Lỗi tải dữ liệu.</div>';
+  }
+}
+
+function closeCustodyModal() {
+  document.getElementById('custody-modal').style.display = 'none';
+}
+document.getElementById('custody-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeCustodyModal();
+});
+</script>
+{% endblock %}

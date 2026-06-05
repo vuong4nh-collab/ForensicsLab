@@ -1,0 +1,181 @@
+{% extends 'base.html' %}
+
+{% block title %}Đăng nhập{% endblock %}
+
+{% block head %}
+<style>
+body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+}
+body::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 20% 50%, rgba(0, 212, 255, .06) 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, rgba(0, 102, 204, .08) 0%, transparent 50%);
+    pointer-events: none;
+}
+.grid-bg {
+    position: absolute;
+    inset: 0;
+    background-image: linear-gradient(rgba(0, 212, 255, .03) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 212, 255, .03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+}
+.card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 2.5rem;
+    width: 100%;
+    max-width: 400px;
+    position: relative;
+    z-index: 1;
+}
+.card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+}
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 2rem;
+}
+.brand-icon {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.brand-icon svg {
+    width: 20px;
+    height: 20px;
+    fill: none;
+    stroke: #fff;
+    stroke-width: 2;
+}
+.brand-text h1 {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--accent);
+    letter-spacing: .05em;
+}
+.brand-text p {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 2px;
+}
+.role-tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+    margin-bottom: 1.5rem;
+    background: var(--bg);
+    border-radius: 4px;
+    padding: 3px;
+}
+.role-tab {
+    padding: 8px;
+    text-align: center;
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--muted);
+    border-radius: 3px;
+    border: none;
+    background: transparent;
+    transition: .15s;
+    font-family: 'IBM Plex Mono', monospace;
+}
+.role-tab.active {
+    background: var(--surface);
+    color: var(--accent);
+    border: 1px solid var(--border);
+}
+.field input {
+    padding: 10px 12px;
+}
+.btn {
+    width: 100%;
+    padding: 11px;
+    font-size: 13px;
+    letter-spacing: .05em;
+}
+.hint {
+    margin-top: 1.2rem;
+    padding: 10px 12px;
+    background: rgba(0, 212, 255, .05);
+    border: 1px solid rgba(0, 212, 255, .1);
+    border-radius: 3px;
+    font-size: 11px;
+    color: var(--muted);
+    font-family: 'IBM Plex Mono', monospace;
+    line-height: 1.8;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="grid-bg"></div>
+<div class="card">
+  <div class="brand">
+    <div class="brand-icon">
+      <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+    </div>
+    <div class="brand-text">
+      <h1>ForensicsLab</h1>
+      <p>Đại học Công nghiệp Hà Nội</p>
+    </div>
+  </div>
+
+  <div class="role-tabs">
+    <button class="role-tab active" onclick="setRole(this,'sinhvien@haui.edu.vn')">Sinh viên</button>
+    <button class="role-tab" onclick="setRole(this,'giaovien@haui.edu.vn')">Giảng viên</button>
+  </div>
+
+  {% if error %}
+  <div class="alert alert-error">⚠ {{ error }}</div>
+  {% endif %}
+
+  <form method="POST">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+    <div class="field">
+      <label>Email</label>
+      <input type="text" name="username" id="username" value="sinhvien@haui.edu.vn" required>
+    </div>
+    <div class="field">
+      <label>Mật khẩu</label>
+      <input type="password" name="password" value="kali" required>
+    </div>
+    <button type="submit" class="btn">ĐĂNG NHẬP →</button>
+  </form>
+
+  <div class="hint">
+    SV: sinhvien@haui.edu.vn / kali<br>
+    GV: giaovien@haui.edu.vn / admin123
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function setRole(el, email){
+  document.querySelectorAll('.role-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('username').value = email;
+  document.querySelector('input[name=password]').value = email.includes('giaovien') ? 'admin123' : 'kali';
+}
+</script>
+{% endblock %}

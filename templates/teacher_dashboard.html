@@ -1,0 +1,280 @@
+{% extends 'base.html' %}
+
+{% block title %}Giảng viên{% endblock %}
+
+{% block head %}
+<style>
+/* Stats Grid */
+.stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 2rem;
+}
+.stat {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1.2rem;
+}
+.stat-val {
+    font-size: 28px;
+    font-weight: 300;
+    font-family: 'IBM Plex Mono', monospace;
+    margin-bottom: 4px;
+}
+.stat-label {
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .08em;
+}
+
+/* Two-column Grid */
+.grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+/* Custom styles for tables */
+.score-input {
+    width: 60px;
+    padding: 4px 6px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    color: var(--text);
+    font-size: 12px;
+    font-family: 'IBM Plex Mono', monospace;
+    outline: none;
+}
+.score-input:focus {
+    border-color: var(--accent);
+}
+.btn-grade {
+    padding: 4px 10px;
+    background: linear-gradient(135deg, #0066cc, var(--accent));
+    border: none;
+    border-radius: 3px;
+    color: #000;
+    font-size: 11px;
+    cursor: pointer;
+    font-family: 'IBM Plex Mono', monospace;
+    transition: 0.15s;
+}
+.btn-grade:hover {
+    opacity: 0.9;
+}
+.report-preview {
+    font-size: 11px;
+    color: var(--muted);
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Responsive design */
+@media (max-width: 992px) {
+    .grid {
+        grid-template-columns: 1fr;
+    }
+}
+@media (max-width: 768px) {
+    .stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .navbar {
+        padding: 0 1rem;
+    }
+    .nav-links {
+        margin-left: 0.5rem;
+    }
+}
+@media (max-width: 480px) {
+    .stats {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}
+
+{% block navbar %}
+<nav class="navbar">
+  <span class="brand">[ ForensicsLab ] — Giảng viên</span>
+  <div class="nav-links">
+    <a class="nav-link active" href="/dashboard">Dashboard</a>
+    <a class="nav-link" href="/accounts">Tài khoản</a>
+  </div>
+  <div class="nav-right">
+    <span>{{ session.fullname }}</span>
+    <a class="logout" href="/logout">Thoát</a>
+  </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="content">
+  <div class="stats">
+    <div class="stat"><div class="stat-val" style="color:var(--accent)">{{ students|length }}</div><div class="stat-label">Sinh viên</div></div>
+    <div class="stat"><div class="stat-val" style="color:var(--warning)">{{ all_progress|selectattr('status','equalto','submitted')|list|length }}</div><div class="stat-label">Chờ chấm</div></div>
+    <div class="stat"><div class="stat-val" style="color:var(--success)">{{ all_progress|selectattr('status','equalto','graded')|list|length }}</div><div class="stat-label">Đã chấm</div></div>
+    <div class="stat"><div class="stat-val">{{ scenarios|length }}</div><div class="stat-label">Kịch bản</div></div>
+  </div>
+
+  <div class="grid">
+    <div class="panel">
+      <div class="panel-title">Danh sách sinh viên</div>
+      <table>
+        <thead><tr><th>Họ tên</th><th>Email</th><th>Tiến độ</th></tr></thead>
+        <tbody>
+        {% for s in students %}
+        {% set done = all_progress|selectattr('user_id','equalto',s.id)|selectattr('status','equalto','graded')|list|length %}
+        <tr>
+          <td>{{ s.fullname }}</td>
+          <td style="color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:11px">{{ s.username }}</td>
+          <td><span class="badge b-done">{{ done }}/{{ scenarios|length }}</span></td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Tiến độ theo kịch bản</div>
+      {% for sc in scenarios %}
+      {% set done_count = all_progress|selectattr('scenario_id','equalto',sc.id)|selectattr('status','in',['submitted','graded'])|list|length %}
+      <div style="margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
+          <span>{{ sc.title }}</span>
+          <span style="color:var(--muted);font-family:'IBM Plex Mono',monospace">{{ done_count }}/{{ students|length }}</span>
+        </div>
+        <div style="height:4px;background:var(--border);border-radius:2px;overflow:hidden">
+          <div style="height:100%;background:linear-gradient(90deg,#0066cc,var(--accent));width:{% if students|length > 0 %}{{ (done_count/students|length*100)|int }}{% else %}0{% endif %}%;border-radius:2px"></div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="panel" style="overflow-x: auto;">
+    <div class="panel-title">Báo cáo sinh viên — Chấm điểm</div>
+    <div style="min-width: 900px;">
+      <table>
+        <thead><tr><th>Sinh viên</th><th>Kịch bản</th><th>Trạng thái</th><th>Nộp lúc</th><th>Tiến độ CTF</th><th>Báo cáo</th><th>Tổng điểm</th></tr></thead>
+        <tbody>
+        {% for p in all_progress %}
+        <tr>
+          <td>{{ p.fullname }}</td>
+          <td style="font-family:'IBM Plex Mono',monospace;font-size:11px">{{ p.title }}</td>
+          <td>
+            {% if p.status == 'graded' %}<span class="badge b-done">Đã chấm</span>
+            {% elif p.status == 'submitted' %}<span class="badge b-pending">Chờ chấm</span>
+            {% else %}<span class="badge b-none">Đang làm</span>{% endif %}
+          </td>
+          <td style="color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:11px">{{ p.submitted_at or '—' }}</td>
+          <td>
+            <span class="badge {% if p.correct_flags == p.total_flags %}b-done{% else %}b-mid{% endif %}">
+              🚩 {{ p.correct_flags }}/{{ p.total_flags }} Flags
+            </span>
+          </td>
+          <td><div class="report-preview" title="{{ p.report }}">{{ p.report or '—' }}</div></td>
+          <td>
+            {% if p.status == 'submitted' %}
+            <form method="POST" action="/grade/{{ p.id }}" style="display:flex;gap:6px;align-items:center">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+              <input type="number" name="score" min="0" max="4" step="0.1" class="score-input" placeholder="BC (0-4)" required>
+              <button type="submit" class="btn-grade">Lưu điểm</button>
+            </form>
+            <div style="font-size:10px;color:var(--muted);margin-top:2px;font-family:'IBM Plex Mono',monospace;">
+              * Điểm CTF hiện tại: {{ (p.score)|round(1) }}đ
+            </div>
+            {% else %}
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--accent);font-weight:500;">
+              {{ p.score|round(1) }}/10
+            </span>
+            <div style="font-size:10px;color:var(--muted);margin-top:2px;font-family:'IBM Plex Mono',monospace;">
+              (CTF: {{ (p.score - p.teacher_score)|round(1) }}đ | BC: {{ p.teacher_score|round(1) }}đ)
+            </div>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+        {% if not all_progress %}
+        <tr><td colspan="7" style="text-align:center;color:var(--muted);padding:2rem">Chưa có báo cáo nào được nộp</td></tr>
+        {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ─── Nhật ký lệnh CLI (Audit Trail) ─────────────────────────────────── -->
+  <div class="panel" style="overflow-x: auto; margin-top: 1.5rem;">
+    <div class="panel-title" style="display:flex;align-items:center;gap:8px;">
+      <span style="font-size:18px;">🔍</span> Nhật ký thực hành — CLI Audit Log
+      <span style="margin-left:auto;font-size:11px;color:var(--muted);font-weight:400;font-family:'IBM Plex Mono',monospace;">100 lệnh gần nhất</span>
+    </div>
+    <div style="min-width:900px;">
+      <table>
+        <thead>
+          <tr>
+            <th>Thời gian</th>
+            <th>Sinh viên</th>
+            <th>Kịch bản</th>
+            <th>Lệnh đã gõ</th>
+            <th>Kết quả</th>
+            <th>Chế độ</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% if command_logs %}
+          {% for log in command_logs %}
+          <tr>
+            <td style="color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:11px;white-space:nowrap;">
+              {{ log.executed_at or '—' }}
+            </td>
+            <td>{{ log.fullname }}</td>
+            <td style="font-family:'IBM Plex Mono',monospace;font-size:11px;">{{ log.scenario_title }}</td>
+            <td style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#7dd3fc;max-width:320px;word-break:break-all;">
+              <code>{{ log.command }}</code>
+            </td>
+            <td style="max-width:280px;">
+              {% if log.exit_code is not none %}
+                <span class="badge {% if log.exit_code == 0 %}b-done{% else %}b-pending{% endif %}">
+                  exit {{ log.exit_code }}
+                </span>
+              {% else %}
+                <span style="color:var(--muted);font-size:11px;">—</span>
+              {% endif %}
+              {% if log.output_snippet %}
+              <div style="font-size:10px;color:var(--muted);font-family:'IBM Plex Mono',monospace;margin-top:3px;max-width:280px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;"
+                   title="{{ log.output_snippet }}">
+                {{ log.output_snippet[:80] }}{% if log.output_snippet|length > 80 %}…{% endif %}
+              </div>
+              {% endif %}
+            </td>
+            <td>
+              {% if log.mode == 'docker' %}
+                <span class="badge" style="background:rgba(99,220,150,0.15);color:#63dc96;border:1px solid rgba(99,220,150,0.3);">🐳 Docker</span>
+              {% else %}
+                <span class="badge" style="background:rgba(251,191,36,0.15);color:#fbbf24;border:1px solid rgba(251,191,36,0.3);">💡 Giả lập</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        {% else %}
+          <tr>
+            <td colspan="6" style="text-align:center;color:var(--muted);padding:2rem;">
+              Chưa có lệnh nào được ghi nhận. Học viên cần thực hành trong lab để xuất hiện tại đây.
+            </td>
+          </tr>
+        {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

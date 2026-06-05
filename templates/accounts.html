@@ -1,0 +1,163 @@
+{% extends 'base.html' %}
+
+{% block title %}Quản lý tài khoản{% endblock %}
+
+{% block head %}
+<style>
+/* Custom styles for accounts page */
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr auto;
+    gap: 10px;
+    align-items: end;
+}
+.pw-form {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+.pw-input {
+    width: 100px;
+    padding: 5px 8px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    color: var(--text);
+    font-size: 11px;
+    font-family: 'IBM Plex Mono', monospace;
+    outline: none;
+    transition: 0.15s;
+}
+.pw-input:focus {
+    border-color: var(--accent);
+}
+.empty {
+    text-align: center;
+    padding: 2rem;
+    color: var(--muted);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+}
+.count {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 1rem;
+}
+
+/* Responsive design */
+@media (max-width: 900px) {
+    .form-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    .form-grid .btn {
+        width: 100%;
+        margin-top: 10px;
+    }
+}
+@media (max-width: 768px) {
+    .navbar {
+        padding: 0 1rem;
+    }
+    .nav-links {
+        margin-left: 0.5rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block navbar %}
+<nav class="navbar">
+  <span class="brand">[ ForensicsLab ]</span>
+  <div class="nav-links">
+    <a class="nav-link" href="/dashboard">Dashboard</a>
+    <a class="nav-link active" href="/accounts">Tài khoản</a>
+  </div>
+  <div class="nav-right">
+    <span>{{ session.fullname }}</span>
+    <a class="logout" href="/logout">Thoát</a>
+  </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="content">
+
+  {% set msg = request.args.get('msg') %}
+  {% if msg == 'success' %}
+  <div class="alert alert-success">✓ Tạo tài khoản thành công</div>
+  {% elif msg == 'exists' %}
+  <div class="alert alert-error">⚠ Email đã tồn tại trong hệ thống</div>
+  {% elif msg == 'invalid' %}
+  <div class="alert alert-error">⚠ Vui lòng nhập đầy đủ thông tin</div>
+  {% endif %}
+
+  <div class="section-title">Tạo tài khoản sinh viên</div>
+  <div class="panel">
+    <form method="POST" action="/create_account">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+      <div class="form-grid">
+        <div class="field">
+          <label>Họ và tên</label>
+          <input type="text" name="fullname" placeholder="Nguyễn Văn A" required>
+        </div>
+        <div class="field">
+          <label>Email đăng nhập</label>
+          <input type="text" name="username" placeholder="sv@haui.edu.vn" required>
+        </div>
+        <div class="field">
+          <label>Mật khẩu</label>
+          <input type="password" name="password" placeholder="haui2026" value="haui2026">
+        </div>
+        <button type="submit" class="btn">+ Tạo tài khoản</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="section-title">Danh sách sinh viên</div>
+  <div class="count">{{ students|length }} sinh viên</div>
+  <div class="panel" style="padding:0; overflow-x: auto;">
+    <div style="min-width: 800px;">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Họ và tên</th>
+            <th>Email</th>
+            <th>Trạng thái</th>
+            <th>Đổi mật khẩu</th>
+            <th>Xoá</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in students %}
+          <tr>
+            <td style="font-family:'IBM Plex Mono',monospace;color:var(--muted)">{{ loop.index }}</td>
+            <td style="font-weight:500">{{ s.fullname }}</td>
+            <td style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--muted)">{{ s.username }}</td>
+            <td><span class="badge b-active">Hoạt động</span></td>
+            <td>
+              <form method="POST" action="/reset_password/{{ s.id }}" class="pw-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <input type="password" name="new_password" class="pw-input" placeholder="Mật khẩu mới" required>
+                <button type="submit" class="btn-reset">Đặt lại</button>
+              </form>
+            </td>
+            <td>
+              <form method="POST" action="/delete_account/{{ s.id }}" onsubmit="return confirm('Xoá tài khoản {{ s.fullname }}?')">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <button type="submit" class="btn-danger">Xoá</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+          {% if not students %}
+          <tr><td colspan="6" class="empty">Chưa có sinh viên nào. Tạo tài khoản ở trên.</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

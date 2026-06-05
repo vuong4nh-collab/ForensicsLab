@@ -1,0 +1,170 @@
+[
+  {
+    "scenario_id": 1,
+    "filename": "capture_traffic.pcapng",
+    "sha256": "53b41b6ec8fbfca5a53e05800ad994dce4abab6baac52d4d29830ec7da4e7cd1",
+    "size": 3121,
+    "generated_at": "2026-06-03T16:42:36.936359"
+  },
+  {
+    "scenario_id": 1,
+    "filename": "capture_traffic.pcapng.sha256",
+    "sha256": "c92cc924c3cbb33c3b8f741a9f4d2559dcf3fdf5fd9fc7926641dd87e7cc6e84",
+    "size": 90,
+    "generated_at": "2026-06-03T16:42:36.944171"
+  },
+  {
+    "scenario_id": 1,
+    "filename": "capture_traffic.pcapng.sha256.sha256",
+    "sha256": "2ebd7f9b0c730d0097feef9ba4d209785007f1ef3cd3a179e480bdfb94e793a1",
+    "size": 97,
+    "generated_at": "2026-06-03T16:42:36.951244"
+  },
+  {
+    "scenario_id": 1,
+    "filename": "capture_traffic.pcapng.sha256.sha256.sha256",
+    "sha256": "94a8f6f6a12aa563045111c230b89b6da04ae05aac6d3678c4ba8fd9e72b5adc",
+    "size": 104,
+    "generated_at": "2026-06-03T16:42:36.958235"
+  },
+  {
+    "scenario_id": 1,
+    "filename": "readme.txt",
+    "sha256": "d360733468b03d4cb07e922e68223408d99d7cb48eca6e104a5500cac8cb8121",
+    "size": 222,
+    "generated_at": "2026-06-03T16:42:36.966069"
+  },
+  {
+    "scenario_id": 1,
+    "filename": "readme.txt.sha256",
+    "sha256": "cd50cd56ac76da1eda903b4cdfb2c9f1de587bb3d0e3687bd6414ca7bfb34cc4",
+    "size": 78,
+    "generated_at": "2026-06-03T16:42:36.981039"
+  },
+  {
+    "scenario_id": 1,
+    "filename": "readme.txt.sha256.sha256",
+    "sha256": "145f619ca08e41ed2653bc729eda79e2c8690dc79414c601f37182c547dad947",
+    "size": 85,
+    "generated_at": "2026-06-03T16:42:36.989077"
+  },
+  {
+    "scenario_id": 1,
+    "filename": "readme.txt.sha256.sha256.sha256",
+    "sha256": "7d23de1c869f7771c2d7a8ea95dbd3b116bf051f75af0a3a9fd2df8af128042d",
+    "size": 92,
+    "generated_at": "2026-06-03T16:42:36.996678"
+  },
+  {
+    "scenario_id": 2,
+    "filename": "chain_of_custody.txt",
+    "sha256": "59d9022acd8ba0046083862de7a5b66f3c8a2a7a2dfbee1ca82fb0d3d6be1db9",
+    "size": 382,
+    "generated_at": "2026-06-03T16:42:37.003990"
+  },
+  {
+    "scenario_id": 2,
+    "filename": "chain_of_custody.txt.sha256",
+    "sha256": "9f6d2a27047d6b44445e5a2cddd7470c38a99fbbe4528eaa185b81ca2ca7bc92",
+    "size": 88,
+    "generated_at": "2026-06-03T16:42:37.011791"
+  },
+  {
+    "scenario_id": 2,
+    "filename": "chain_of_custody.txt.sha256.sha256",
+    "sha256": "40225ed821945481a07cf6938fdba06f02013163ccc4aff709bc3ff75ddd9760",
+    "size": 95,
+    "generated_at": "2026-06-03T16:42:37.018606"
+  },
+  {
+    "scenario_id": 2,
+    "filename": "chain_of_custody.txt.sha256.sha256.sha256",
+    "sha256": "770e0eab7745411c819d7e3281dab444c9145c33ea3ed3181f01cda6e04ab909",
+    "size": 102,
+    "generated_at": "2026-06-03T16:42:37.026808"
+  },
+  {
+    "scenario_id": 2,
+    "filename": "suspect_disk.E01",
+    "sha256": "03a792a7126e94b5b9e750c191b852796f63b9df7066438202ac39221037bf96",
+    "size": 2097152,
+    "generated_at": "2026-06-03T16:42:37.045471"
+  },
+  {
+    "scenario_id": 2,
+    "filename": "suspect_disk.E01.sha256",
+    "sha256": "6de5a978914f53c83eb35032818563f10ddb2b2a9e9eef549ac450d6f96b2858",
+    "size": 84,
+    "generated_at": "2026-06-03T16:42:37.052247"
+  },
+  {
+    "scenario_id": 2,
+    "filename": "suspect_disk.E01.sha256.sha256",
+    "sha256": "2dde01f0628ef38bee13e07541da8ec901757b051a5102cff4dcec42220baf4f",
+    "size": 91,
+    "generated_at": "2026-06-03T16:42:37.060045"
+  },
+  {
+    "scenario_id": 2,
+    "filename": "suspect_disk.E01.sha256.sha256.sha256",
+    "sha256": "ab2f5cdeda7c4de3340904aa3b06462f48a7932fb53541d517ddafe2dddf404d",
+    "size": 98,
+    "generated_at": "2026-06-03T16:42:37.066947"
+  },
+  {
+    "scenario_id": 3,
+    "filename": "memory_dump.vmem",
+    "sha256": "ceefde32674ade8b6cae7990882cb939213dcb00dfe59939fc6c3e2961176d28",
+    "size": 2097152,
+    "generated_at": "2026-06-03T16:42:37.078993"
+  },
+  {
+    "scenario_id": 3,
+    "filename": "memory_dump.vmem.sha256",
+    "sha256": "8e7d1743f6a57c2d1e4d058d0a6fbea2b7f371f0bd0c8025dfdf725b697fcafc",
+    "size": 84,
+    "generated_at": "2026-06-03T16:42:37.085541"
+  },
+  {
+    "scenario_id": 3,
+    "filename": "memory_dump.vmem.sha256.sha256",
+    "sha256": "c064294936b34aa2da58d73c797c1b3881d5adbc2c575c55bf8fbe9d70b17612",
+    "size": 91,
+    "generated_at": "2026-06-03T16:42:37.093299"
+  },
+  {
+    "scenario_id": 3,
+    "filename": "memory_dump.vmem.sha256.sha256.sha256",
+    "sha256": "41190f4c11430b2d42028ec43bb0e6e228db4d719dab7a42a0db82192ce269a7",
+    "size": 98,
+    "generated_at": "2026-06-03T16:42:37.100216"
+  },
+  {
+    "scenario_id": 3,
+    "filename": "readme.txt",
+    "sha256": "e6f38c93293b764fb854879ff587c2ed1b093257938d631bbb4a1854ab955bf9",
+    "size": 253,
+    "generated_at": "2026-06-03T16:42:37.107080"
+  },
+  {
+    "scenario_id": 3,
+    "filename": "readme.txt.sha256",
+    "sha256": "402c9f16bcb256fcb456df6977bccaed0ccf5186ea8823fcdae45550f401e4ca",
+    "size": 78,
+    "generated_at": "2026-06-03T16:42:37.115121"
+  },
+  {
+    "scenario_id": 3,
+    "filename": "readme.txt.sha256.sha256",
+    "sha256": "0d296df19f17c83570293989a56fbcc7913c616e2a3ac7a2bfed0ae089fc2c9f",
+    "size": 85,
+    "generated_at": "2026-06-03T16:42:37.122142"
+  },
+  {
+    "scenario_id": 3,
+    "filename": "readme.txt.sha256.sha256.sha256",
+    "sha256": "6b5d0cacb7ce6936b62e3272b0f06a4e5c0dce26c77a85f8e0ad084c1c5a35cd",
+    "size": 92,
+    "generated_at": "2026-06-03T16:42:37.129901"
+  }
+]
