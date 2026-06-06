@@ -188,6 +188,7 @@
     font-size: 11px;
     font-family: 'IBM Plex Mono', monospace;
     color: var(--accent);
+    flex-shrink: 0;
 }
 .terminal-dots {
     display: flex;
@@ -202,14 +203,80 @@
 .dot.yellow { background: #ffab00; }
 .dot.green { background: #00c853; }
 
-.terminal-body {
+#terminal-mount {
     flex: 1;
-    padding: 12px;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* Scrollable output area */
+.terminal-output {
+    flex: 1;
+    min-height: 0;
+    padding: 12px 12px 6px;
     overflow-y: auto;
+    overflow-x: hidden;
     font-family: 'IBM Plex Mono', monospace;
     font-size: 12px;
     color: #e2e8f0;
     line-height: 1.5;
+    scroll-behavior: smooth;
+}
+.terminal-output::-webkit-scrollbar {
+    width: 6px;
+}
+.terminal-output::-webkit-scrollbar-track {
+    background: #05070c;
+}
+.terminal-output::-webkit-scrollbar-thumb {
+    background: rgba(0,212,255,0.25);
+    border-radius: 3px;
+}
+.terminal-output::-webkit-scrollbar-thumb:hover {
+    background: rgba(0,212,255,0.5);
+}
+
+/* Sticky input bar at bottom */
+.terminal-input-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: #05070c;
+    border-top: 1px solid rgba(0,212,255,0.1);
+    flex-shrink: 0;
+    position: relative;
+}
+
+/* Scroll-to-bottom button */
+#term-scroll-btn {
+    position: absolute;
+    right: 48px;
+    top: -36px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: rgba(0,212,255,0.15);
+    border: 1px solid rgba(0,212,255,0.4);
+    color: var(--accent);
+    font-size: 14px;
+    cursor: pointer;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    transition: 0.2s;
+    animation: pulse-scroll 2s infinite;
+    z-index: 10;
+}
+#term-scroll-btn:hover {
+    background: var(--accent);
+    color: #000;
+}
+@keyframes pulse-scroll {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(0,212,255,0.4); }
+    50% { box-shadow: 0 0 0 6px rgba(0,212,255,0); }
 }
 .term-line {
     margin-bottom: 4px;

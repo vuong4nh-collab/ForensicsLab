@@ -45,25 +45,40 @@ class ForensicTerminal {
     init() {
         if (!this.container) return;
         this.container.innerHTML = `
-            <div class="terminal-body" id="term-body">
+            <div class="terminal-output" id="term-body">
                 <div class="term-line output">ForensicsLab Forensics Terminal v1.1.0</div>
                 <div class="term-line output">Gõ 'help' để xem danh sách lệnh được hỗ trợ.</div>
                 <div class="term-line output" style="margin-bottom: 10px;">--------------------------------------------------</div>
                 <div id="term-output"></div>
-                <div class="term-input-line">
-                    <span class="term-prompt">root@kali:~$</span>
-                    <input type="text" id="term-input" autocomplete="off" spellcheck="false" />
-                </div>
+            </div>
+            <div class="terminal-input-bar">
+                <span class="term-prompt">root@kali:~$</span>
+                <input type="text" id="term-input" autocomplete="off" spellcheck="false" />
+                <button id="term-scroll-btn" title="Cuộn xuống cuối" onclick="" style="display:none;">↓</button>
             </div>
         `;
 
-        this.inputEl = document.getElementById('term-input');
-        this.outputEl = document.getElementById('term-output');
-        this.bodyEl = document.getElementById('term-body');
+        this.inputEl    = document.getElementById('term-input');
+        this.outputEl   = document.getElementById('term-output');
+        this.bodyEl     = document.getElementById('term-body');
+        this.scrollBtn  = document.getElementById('term-scroll-btn');
+
+        // Show/hide scroll-to-bottom button based on scroll position
+        this.bodyEl.addEventListener('scroll', () => {
+            const atBottom = this.bodyEl.scrollHeight - this.bodyEl.scrollTop - this.bodyEl.clientHeight < 40;
+            this.scrollBtn.style.display = atBottom ? 'none' : 'flex';
+        });
+
+        // Scroll-to-bottom button click
+        this.scrollBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this._scrollToBottom();
+            this.inputEl.focus();
+        });
 
         // Focus input on click anywhere in terminal
-        this.container.addEventListener('click', () => {
-            this.inputEl.focus();
+        this.container.addEventListener('click', (e) => {
+            if (e.target !== this.scrollBtn) this.inputEl.focus();
         });
 
         // Setup key listeners
@@ -87,6 +102,14 @@ class ForensicTerminal {
         this.inputEl.focus();
     }
 
+    _scrollToBottom() {
+        this.bodyEl.scrollTop = this.bodyEl.scrollHeight;
+    }
+
+    _isNearBottom() {
+        return this.bodyEl.scrollHeight - this.bodyEl.scrollTop - this.bodyEl.clientHeight < 80;
+    }
+
     escapeHtml(text) {
         return String(text)
             .replace(/&/g, '&amp;')
@@ -95,11 +118,18 @@ class ForensicTerminal {
     }
 
     writeOutput(text, type = 'output') {
+        const wasAtBottom = this._isNearBottom();
         const line = document.createElement('div');
         line.className = `term-line ${type}`;
         line.innerHTML = text.replace(/\n/g, '<br>').replace(/ /g, '&nbsp;');
         this.outputEl.appendChild(line);
-        this.bodyEl.scrollTop = this.bodyEl.scrollHeight;
+        // Only auto-scroll if user was already near the bottom
+        if (wasAtBottom) {
+            this._scrollToBottom();
+            if (this.scrollBtn) this.scrollBtn.style.display = 'none';
+        } else {
+            if (this.scrollBtn) this.scrollBtn.style.display = 'flex';
+        }
     }
 
     navigateHistory(direction) {
